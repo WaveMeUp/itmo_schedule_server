@@ -7,7 +7,7 @@ const {NotFound} = require("yahel");
 router.get('/room/:roomNumber', async (req, res, next) => {
     try {
         const data = await scheduleController.getByRoom(req.params.roomNumber);
-        const schedule = scheduleController.generateObject(data);
+        const schedule = scheduleController.generateObject(data, {room: req.params.roomNumber});
         if (schedule.length === 0) throw new NotFound(`Schedule for room ${req.params.roomNumber} not found`);
         res.send(schedule)
     } catch (err) {

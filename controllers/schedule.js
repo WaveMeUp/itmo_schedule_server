@@ -8,6 +8,12 @@ exports.getByRoom = async (roomNumber) => {
     return request(url)
 };
 
+exports.getByGroup = async (groupNumber) => {
+    if (!groupNumber) throw new BadRequest('groupNumber not provided');
+    const url = `http://www.ifmo.ru/ru/schedule/0/${groupNumber}/schedule.htm`;
+    return request(url);
+}
+
 exports.getWeekType = async () => {
     const url = 'http://www.ifmo.ru/ru/';
     const data = await request(url);
@@ -15,7 +21,7 @@ exports.getWeekType = async () => {
     return $('.navbar-text strong').text();
 };
 
-exports.generateObject = (body) => {
+exports.generateObject = (body, options) => {
     let arr = [];
     if (!body) throw new BadRequest('requestdata not provided');
     const $ = cheerio.load(body);
@@ -26,16 +32,24 @@ exports.generateObject = (body) => {
             schedule: []
         };
         $(day).find('tr').each((j, row) => {
-            const time = $(row).find('.time').first().text();
+            const time = $(row).find('.time').first().find('span').first().text().trim();
             if (time) {
-                const group = $(row).find('td.time:nth-child(4)').text();
+                const group = options.group ? options.group : $(row).find('td.time:nth-child(4)').text();
                 const location = $(row).find('.room span').text().trim();
                 const lesson = $(row).find('.lesson dd').text().trim();
                 const teacher = $(row).find('.lesson b').text().trim();
-                const week = $(row).find('.lesson dt').first().text().trim() === 'четная неделя' ? 'Ч' : 'Н';
+                // const week = $(row).find('.lesson dt').first().text().trim() === 'четная неделя' ? 'Ч' : 'Н';
+                const week = $(row).find('.time').first().find('dt').first().text().trim() ? ($(row).find('.time').first().find('dt').first().text().trim() === 'четная неделя' ? 'Ч' : 'Н')  : ($(row).find('.lesson dt').first().text().trim() === 'четная неделя' ? 'Ч' : 'Н')
+                let room;
+                if (options.room) room = options.room;
+                else {
+                    const split = lesson.split(':');
+                    room = $(row).find('.room dd').text().trim() ? $(row).find('.room dd').text().trim() : (split.length > 1 ? split[1].trim() : '');
+                }
                 obj.schedule.push({
                     time,
                     group,
+                    room,
                     lesson,
                     teacher,
                     week,
