@@ -80,4 +80,5 @@ const convertDayName = (week) => {
         case 'Вс':
             return 'Воскресенье';
     }
+    return week;
 };
